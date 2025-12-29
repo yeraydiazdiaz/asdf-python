@@ -2,37 +2,33 @@ echoerr() {
   printf "\033[0;31m%s\033[0m" "$1" >&2
 }
 
-ensure_python_build_installed() {
-  if [ ! -f "$(python_build_path)" ]; then
-    download_python_build
+ensure_uv_installed() {
+  if [ ! -f "$(uv_path)" ]; then
+    download_uv
   fi
 }
 
-download_python_build() {
-  echo "Downloading python-build..." >&2
-  local pyenv_url="https://github.com/pyenv/pyenv.git"
-  git clone $pyenv_url "$(pyenv_path)"
+download_uv() {
+  echo "Downloading uv..." >&2
+  curl -LsSf https://astral.sh/uv/install.sh | sh
 }
 
-python_build_path() {
-  echo "$(pyenv_path)/plugins/python-build/bin/python-build"
+uv_path() {
+  which uv
 }
 
-update_python_build() {
-  cd "$(pyenv_path)" && git fetch && git reset --hard origin/master > /dev/null 2>&1
+update_uv() {
+  echo "Updating uv..." >&2
+  uv self update
 }
 
-pyenv_path() {
-  echo "$(dirname $(dirname $0))/pyenv"
+uv_update_timestamp_path() {
+  echo "$(dirname $(dirname "$0"))/uv_last_update"
 }
 
-pyenv_update_timestamp_path() {
-  echo "$(dirname $(dirname "$0"))/pyenv_last_update"
-}
-
-pyenv_should_update() {
+uv_should_update() {
   update_timeout=3600
-  update_timestamp_path=$(pyenv_update_timestamp_path)
+  update_timestamp_path=$(uv_update_timestamp_path)
 
   if [ ! -f "$update_timestamp_path" ]; then
     return 0
@@ -45,11 +41,11 @@ pyenv_should_update() {
   [ $invalidated_at -lt $current_timestamp ]
 }
 
-install_or_update_python_build() {
-  if [ ! -f "$(python_build_path)" ]; then
-    download_python_build
-  elif pyenv_should_update; then
-    update_python_build
-    date +%s > "$(pyenv_update_timestamp_path)"
+install_or_update_uv() {
+  if [ ! -f "$(uv_path)" ]; then
+    download_uv
+  elif uv_should_update; then
+    update_uv
+    date +%s > "$(uv_update_timestamp_path)"
   fi
 }

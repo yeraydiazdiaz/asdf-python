@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
-
+set -eu -o pipefail
 source "$(dirname "$0")/utils.sh"
 
 install_python() {
@@ -14,20 +13,10 @@ install_python() {
     echoerr "For a list of available versions, see \`asdf list-all python\`."
     exit 1
   fi
-  install_or_update_python_build
-
-  if [[ -n "${ASDF_PYTHON_PATCH_URL:-}" ]]; then 
-    echo "python-build --patch $version $install_path"
-    echo "with patch file from: $ASDF_PYTHON_PATCH_URL"
-    $(python_build_path) --patch "$version" "$install_path" < <(curl -sSL "$ASDF_PYTHON_PATCH_URL")
-  elif [[ -n "${ASDF_PYTHON_PATCHES_DIRECTORY:-}" ]] && [[ -f ${ASDF_PYTHON_PATCHES_DIRECTORY}/${version}.patch ]]; then
-    local patch_file=${ASDF_PYTHON_PATCHES_DIRECTORY}/${version}.patch
-    echo "python-build $version $install_path -p < $patch_file"
-    $(python_build_path) "$version" "$install_path" -p < $patch_file
-  else
-    echo "python-build $version $install_path"
-    $(python_build_path) "$version" "$install_path"
-  fi
+  
+  install_or_update_uv
+  echo "uv python install $version -i $install_path"
+  uv python install "$version" -i $install_path
 }
 
 install_default_python_packages() {
@@ -39,6 +28,6 @@ install_default_python_packages() {
   fi
 }
 
-ensure_python_build_installed
+ensure_uv_installed
 install_python "$ASDF_INSTALL_TYPE" "$ASDF_INSTALL_VERSION" "$ASDF_INSTALL_PATH"
 install_default_python_packages

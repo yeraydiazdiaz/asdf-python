@@ -3,8 +3,8 @@
 source "$(dirname "$0")/utils.sh"
 
 list_all() {
-  install_or_update_python_build
-  $(python_build_path) --definitions | tr '\n' ' '
+  install_or_update_uv
+  uv python list | grep -o '^\S*'  | grep -Eo "\d{1}\.\d{1,2}\.[^\-]+"
 }
 
 list_all
